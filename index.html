@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"],
+    input[type="file"] {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #status {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+
+    #status a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    #status a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Files to OUSL.EU.ORG Google Drive</h1>
+    <input type="text" id="username" placeholder="Enter your username" />
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    function uploadFile() {
+      var fileInput = document.getElementById('fileInput');
+      var usernameInput = document.getElementById('username');
+      var file = fileInput.files[0];
+      var username = usernameInput.value.trim();
+
+      if (!username) {
+        document.getElementById('status').innerText = 'Please enter your username.';
+        return;
+      }
+      
+      if (!file) {
+        document.getElementById('status').innerText = 'No file selected.';
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        var data = event.target.result;
+        var base64Data = arrayBufferToBase64(data);
+
+        google.script.run
+          .withSuccessHandler(function(fileUrl) {
+            if (fileUrl.startsWith('Error:')) {
+              document.getElementById('status').innerText = fileUrl;
+            } else {
+              document.getElementById('status').innerHTML = 'File uploaded successfully. <a href="' + fileUrl + '" target="_blank">View File</a>';
+            }
+          })
+          .uploadFile(base64Data, file.name, file.type, username);
+      };
+
+      reader.onerror = function(event) {
+        document.getElementById('status').innerText = 'Error reading file: ' + event.target.error.message;
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function arrayBufferToBase64(buffer) {
+      var binary = '';
+      var bytes = new Uint8Array(buffer);
+      var len = bytes.byteLength;
+      for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+  </script>
+</body>
+</html>
